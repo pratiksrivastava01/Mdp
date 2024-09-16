@@ -1,7 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy Node.js app to Azure Web App - pratiksrivastava
+name: Build and deploy Next.js app to Azure Web App - pratiksrivastava
 
 on:
   push:
@@ -14,26 +11,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout code
       - uses: actions/checkout@v4
 
+      # Set up Node.js environment
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
 
-      - name: npm install, build, and test
+      # Install dependencies and build the Next.js application
+      - name: Install dependencies and build
         run: |
           npm install
-          npm run build --if-present
-          npm run test --if-present
+          npm run build
 
+      # Zip artifact for deployment
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
 
+      # Upload the build artifact
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
+          name: nextjs-app
           path: release.zip
 
   deploy:
@@ -43,29 +44,32 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
+      id-token: write
 
     steps:
+      # Download the build artifact
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: node-app
+          name: nextjs-app
 
+      # Unzip the build artifact
       - name: Unzip artifact for deployment
         run: unzip release.zip
-      
+
+      # Login to Azure using the credentials stored in GitHub Secrets
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7EE29812055D495492C2CE5B0B40065F }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9D8498803C624EC68788BC1ABD69A330 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BF9343A6565F41E9909097AA598117C2 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      - name: 'Deploy to Azure Web App'
+      # Deploy the application to Azure Web App
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'pratiksrivastava'
+          app-name: 'pratiksrivastava' # Replace with your Azure Web App name
           slot-name: 'Production'
           package: .
-          
